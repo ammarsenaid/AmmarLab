@@ -1,0 +1,1 @@
+export function TroubleshootingPage() { return <section className="glass-panel page"><h3>Troubleshooting</h3><p>Use Settings and Logs pages to diagnose local-agent connectivity, token mismatch, and provider detection issues.</p></section>; }
