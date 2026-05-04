@@ -1,0 +1,3 @@
+import { CommandBlock } from "../components/CommandBlock";
+import { isDefaultToken } from "../services/settingsStore";
+export function LocalAgentSetupPage({ online, agentUrl, token }: { online:boolean; agentUrl:string; token:string }) { return <section className="glass-panel page"><h3>Local Agent Setup</h3><p>Status: <span className={online?"online":"offline"}>{online?"Online":"Offline"}</span> • URL: {agentUrl} • Token: {isDefaultToken(token) ? "Default placeholder" : "Configured"}</p><CommandBlock commands={["npm install","Copy-Item apps/local-agent/.env.example apps/local-agent/.env","npm run dev:agent","npm run dev:portal"]} /></section>; }
