@@ -1,4 +1,4 @@
-import type { AgentLogEntry, Lab, LabStatus, ProviderStatus } from "@ammarlab/shared";
+import type { AgentLogEntry, Lab, LabStatus, ProviderStatus, SystemResources } from "@ammarlab/shared";
 
 type ClientConfig = { agentUrl: string; localToken: string };
 
@@ -20,7 +20,8 @@ export const createLocalAgentClient = (config: ClientConfig) => {
   return {
     getHealth: () => call<{ ok: boolean }>("/health"),
     getProviders: () => call<ProviderStatus[]>("/providers"),
-        getLabs: () => call<Lab[]>("/labs"),
+    getSystemResources: () => call<SystemResources>("/system/resources"),
+    getLabs: () => call<Lab[]>("/labs"),
     getLabStatus: () => call<LabStatus[]>("/labs/status"),
     startLab: (labId: string) => call<{ message: string }>("/labs/start", { method: "POST", body: JSON.stringify({ labId }) }),
     stopLab: (labId: string) => call<{ message: string }>("/labs/stop", { method: "POST", body: JSON.stringify({ labId }) }),
