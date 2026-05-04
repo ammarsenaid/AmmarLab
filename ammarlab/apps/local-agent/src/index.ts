@@ -1,8 +1,9 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { readdir, readFile } from "node:fs/promises";
+import { access, readdir, readFile } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { AgentHealth, AgentLogEntry, Lab, LabActionResult, LabStatus, ProviderStatus, VmStatus } from "@ammarlab/shared";
 
 const app = express();
@@ -59,7 +60,22 @@ function requireLabId(body: unknown): { lab: Lab } | { message: string } {
 }
 
 async function loadLabsFromManifests() {
-  const labsDir = path.resolve(process.cwd(), "labs");
+  const sourceDir = path.dirname(fileURLToPath(import.meta.url));
+  const defaultLabsDir = path.resolve(sourceDir, "../../../labs");
+  const configuredLabsDir = process.env.LABS_DIR?.trim();
+  const labsDir = configuredLabsDir ? path.resolve(configuredLabsDir) : defaultLabsDir;
+
+  try {
+    await access(labsDir);
+  } catch {
+    const envHint = configuredLabsDir
+      ? `LABS_DIR was set to '${configuredLabsDir}'.`
+      : "LABS_DIR is not set.";
+    throw new Error(
+      `Labs folder not found at '${labsDir}'. ${envHint} Set LABS_DIR to your monorepo labs folder (for example: <repo>/labs).`
+    );
+  }
+
   const entries = await readdir(labsDir, { withFileTypes: true });
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
