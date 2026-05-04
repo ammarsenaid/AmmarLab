@@ -1,0 +1,17 @@
+{
+  "id": "active-directory-beginner",
+  "title": "Active Directory Beginner",
+  "description": "Create forest/domain, users, OUs, and basic GPO exposure.",
+  "difficulty": "intermediate",
+  "estimatedDurationMinutes": 150,
+  "requiredRamGb": 12,
+  "requiredCpuCores": 4,
+  "requiredDiskGb": 60,
+  "supportedProviders": ["hyperv", "vmware"],
+  "vms": [
+    {"id":"ad-dc01","name":"Domain Controller","os":"Windows Server 2022","ramGb":8,"cpuCores":2,"diskGb":40},
+    {"id":"ad-cli01","name":"Client VM","os":"Windows 11","ramGb":4,"cpuCores":2,"diskGb":20}
+  ],
+  "snapshots": ["baseline", "domain-created", "post-gpo"],
+  "studentInstructions": ["Promote DC","Join client","Create OUs and users"]
+}

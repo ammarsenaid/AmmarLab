@@ -1,0 +1,15 @@
+{
+  "name": "ammarlab-local-edition",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run -ws build",
+    "dev:portal": "npm --workspace @ammarlab/portal run dev",
+    "dev:agent": "npm --workspace @ammarlab/local-agent run dev",
+    "typecheck": "npm run -ws typecheck"
+  }
+}
