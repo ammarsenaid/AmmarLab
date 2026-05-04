@@ -3,8 +3,12 @@ body { margin: 0; }
 .layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
 aside { background: #121b2f; padding: 1rem; display: flex; flex-direction: column; gap: .5rem; }
 button { background: #1f6feb; color: white; border: 0; padding: .6rem .8rem; border-radius: .5rem; cursor: pointer; }
+button:disabled { opacity: .6; cursor: not-allowed; }
 main { padding: 1.2rem; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: .8rem; margin: 1rem 0; }
 .card { background: #161f34; padding: 1rem; border-radius: .8rem; border: 1px solid #2a3a60; }
 .actions { display: flex; gap: .5rem; flex-wrap: wrap; }
 .offline { background: #5f2120; padding: .7rem; border-radius: .5rem; margin-bottom: .8rem; }
+.toast { padding: .6rem .8rem; border-radius: .5rem; margin-bottom: .6rem; }
+.toast.ok { background: #193a26; }
+.toast.err { background: #5f2120; }
