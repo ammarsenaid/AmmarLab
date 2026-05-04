@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ammarlab/shared": "workspace:*",
+    "@ammarlab/shared": "file:../../packages/shared",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
