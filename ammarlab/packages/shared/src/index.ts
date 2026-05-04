@@ -39,7 +39,7 @@ export interface LabStatus {
   updatedAtIso: string;
 }
 
-export type ProviderState = "detected" | "not_detected" | "unavailable" | "permission_required" | "mock";
+export type ProviderState = "ready" | "detected" | "not_detected" | "not_installed" | "not_enabled" | "module_only" | "unavailable" | "permission_required" | "unknown" | "mock";
 
 export interface ProviderDetectionDetail {
   key: string;
@@ -73,6 +73,8 @@ export interface SystemResources {
   isElevated: boolean | null;
   virtualizationLikelyPresent: boolean | null;
   virtualizationHint: string;
+  hypervisorPresent: boolean | null;
+  virtualizationSupported: boolean | null;
   mocked: boolean;
 }
 

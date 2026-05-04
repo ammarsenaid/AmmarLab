@@ -23,8 +23,19 @@ async function getDiskInfo(): Promise<{ diskTotalGb: number | null; diskFreeGb: 
 async function getSystemResources(): Promise<SystemResources> {
   const powerShellAvailable = await isPowerShellAvailable(); const isElevated = await detectElevated(powerShellAvailable); const disk = await getDiskInfo();
   let virtualizationLikelyPresent: boolean | null = null; let virtualizationHint = "Not checked";
-  if (process.platform === "win32" && powerShellAvailable) { try { const { stdout } = await runPowerShell("$f=Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All -ErrorAction SilentlyContinue; if($f){$f.State}else{'Unknown'}"); virtualizationLikelyPresent = stdout.trim().toLowerCase() === "enabled"; virtualizationHint = virtualizationLikelyPresent ? "Hyper-V feature appears enabled" : "Hyper-V feature not enabled or unavailable"; } catch { virtualizationHint = "Virtualization feature check failed"; } }
-  return { platform: process.platform, osVersion: os.release(), hostname: os.hostname(), username: os.userInfo().username ?? null, cpuModel: os.cpus()[0]?.model ?? "Unknown", cpuLogicalCores: os.cpus().length, totalRamGb: round(os.totalmem() / 1024 ** 3), freeRamGb: round(os.freemem() / 1024 ** 3), ...disk, powerShellAvailable, nodeVersion: process.version, isElevated, virtualizationLikelyPresent, virtualizationHint, mocked: false };
+  let hypervisorPresent: boolean | null = null; let virtualizationSupported: boolean | null = null;
+  if (process.platform === "win32" && powerShellAvailable) {
+    try {
+      const hv = await runPowerShell("$c=Get-CimInstance Win32_ComputerSystem; if($null -ne $c.HypervisorPresent){$c.HypervisorPresent}else{'Unknown'}");
+      const fw = await runPowerShell("$c=Get-CimInstance Win32_Processor | Select-Object -First 1; if($null -ne $c.VirtualizationFirmwareEnabled){$c.VirtualizationFirmwareEnabled}else{'Unknown'}");
+      const hvs = hv.stdout.trim().toLowerCase(); const fws = fw.stdout.trim().toLowerCase();
+      hypervisorPresent = hvs === "true" ? true : hvs === "false" ? false : null;
+      virtualizationSupported = fws === "true" ? true : fws === "false" ? false : null;
+      virtualizationLikelyPresent = hypervisorPresent === true || virtualizationSupported === true;
+      virtualizationHint = virtualizationLikelyPresent ? "CPU virtualization support or Windows hypervisor is present." : "No virtualization support/hypervisor signal detected.";
+    } catch { virtualizationHint = "Virtualization capability check failed"; }
+  }
+  return { platform: process.platform, osVersion: os.release(), hostname: os.hostname(), username: os.userInfo().username ?? null, cpuModel: os.cpus()[0]?.model ?? "Unknown", cpuLogicalCores: os.cpus().length, totalRamGb: round(os.totalmem() / 1024 ** 3), freeRamGb: round(os.freemem() / 1024 ** 3), ...disk, powerShellAvailable, nodeVersion: process.version, isElevated, virtualizationLikelyPresent, virtualizationHint, hypervisorPresent, virtualizationSupported, mocked: false };
 }
 async function detectProviders(): Promise<ProviderStatus[]> {
   const powerShellAvailable = await isPowerShellAvailable(); const isElevated = await detectElevated(powerShellAvailable);
@@ -38,10 +49,18 @@ async function detectProviders(): Promise<ProviderStatus[]> {
       const mod = (await runPowerShell("if(Get-Module -ListAvailable -Name Hyper-V){'true'}else{'false'}")).stdout.trim().toLowerCase() === "true";
       const getVm = (await runPowerShell("if(Get-Command Get-VM -ErrorAction SilentlyContinue){'true'}else{'false'}")).stdout.trim().toLowerCase() === "true";
       const feature = (await runPowerShell("$f=Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All -ErrorAction SilentlyContinue; if($f){$f.State}else{'Unknown'}")).stdout.trim();
-      const permissionRequired = isElevated === false && (mod || getVm);
-      const state = permissionRequired ? "permission_required" : mod && getVm ? "detected" : feature.toLowerCase() === "disabled" ? "not_detected" : "unavailable";
-      const message = mod ? "Hyper-V PowerShell module found" : "Hyper-V not available on this Windows edition";
-      hypervState = { provider: "hyperv", detected: mod && getVm, enabled: mod && getVm && isElevated !== false, state, version: null, note: permissionRequired ? "Run Local Agent as Administrator for full Hyper-V access" : message, message: getVm ? message : "Get-VM command not found", details: [{ key: "module", value: String(mod) }, { key: "get_vm", value: String(getVm) }, { key: "feature", value: feature || "unknown" }, { key: "is_elevated", value: String(isElevated) }] };
+      const vmms = (await runPowerShell("$s=Get-Service vmms -ErrorAction SilentlyContinue; if($s){$s.Status}else{'Missing'}")).stdout.trim();
+      const whp = (await runPowerShell("$f=Get-WindowsOptionalFeature -Online -FeatureName HypervisorPlatform -ErrorAction SilentlyContinue; if($f){$f.State}else{'Missing'}")).stdout.trim();
+      const vmp = (await runPowerShell("$f=Get-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform -ErrorAction SilentlyContinue; if($f){$f.State}else{'Missing'}")).stdout.trim();
+      const wsl = (await runPowerShell("$f=Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -ErrorAction SilentlyContinue; if($f){$f.State}else{'Missing'}")).stdout.trim();
+      const featureEnabled = feature.toLowerCase() === "enabled";
+      const vmmsReady = ["running","stopped"].includes(vmms.toLowerCase());
+      const fullInstalled = featureEnabled;
+      const ready = fullInstalled && getVm && mod && vmmsReady && isElevated !== false;
+      const moduleOnly = !fullInstalled && getVm;
+      const state = ready ? "ready" : fullInstalled && isElevated === false ? "permission_required" : moduleOnly ? "module_only" : fullInstalled ? "detected" : feature.toLowerCase() === "disabled" ? "not_enabled" : "not_installed";
+      const message = ready ? "Hyper-V is installed and ready for VM control." : fullInstalled && isElevated === false ? "Hyper-V appears installed, but running the Local Agent as Administrator may be required for VM control." : moduleOnly ? "Hyper-V PowerShell cmdlets exist, but full Hyper-V is not enabled." : "CPU virtualization or Windows hypervisor is present, but full Hyper-V is not installed/enabled.";
+      hypervState = { provider: "hyperv", detected: ready || fullInstalled, enabled: ready, state, version: null, note: message, message, details: [{ key: "hyperv_feature", value: feature || "unknown" }, { key: "hyperv_module", value: String(mod) }, { key: "get_vm", value: String(getVm) }, { key: "vmms", value: vmms || "unknown" }, { key: "windows_hypervisor_platform", value: whp || "unknown" }, { key: "virtual_machine_platform", value: vmp || "unknown" }, { key: "wsl_feature", value: wsl || "unknown" }, { key: "is_elevated", value: String(isElevated) }] };
     } catch (error) { addLog({ level: "error", action: "agent", labId: null, provider: "mock", message: `Hyper-V detection warning: ${(error as Error).message}`, result: "error" }); }
   }
   const vmrunCandidates = [process.env.VMRUN_PATH?.trim(), "C:\\Program Files (x86)\\VMware\\VMware Workstation\\vmrun.exe", "C:\\Program Files\\VMware\\VMware Workstation\\vmrun.exe"].filter(Boolean) as string[];
