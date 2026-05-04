@@ -7,12 +7,6 @@ export interface VirtualMachine {
   ramGb: number;
   cpuCores: number;
   diskGb: number;
-  snapshotName: string;
-}
-
-export interface LabManifest {
-  version: string;
-  instructions: string[];
 }
 
 export interface Lab {
@@ -26,13 +20,22 @@ export interface Lab {
   requiredDiskGb: number;
   supportedProviders: LabProvider[];
   vms: VirtualMachine[];
-  manifest: LabManifest;
+  snapshots: string[];
+  studentInstructions: string[];
+}
+
+export type LabRuntimeState = "idle" | "starting" | "running" | "stopping" | "reset_in_progress" | "error";
+export type VmRuntimeState = "stopped" | "running" | "resetting" | "error";
+
+export interface VmStatus {
+  vmId: string;
+  state: VmRuntimeState;
 }
 
 export interface LabStatus {
   labId: string;
-  state: "stopped" | "starting" | "running" | "stopping" | "resetting";
-  activeVmIds: string[];
+  state: LabRuntimeState;
+  vmStatuses: VmStatus[];
   updatedAtIso: string;
 }
 
@@ -56,4 +59,15 @@ export interface LabActionResult {
   action: "start" | "stop" | "reset" | "import";
   labId?: string;
   message: string;
+}
+
+export interface AgentLogEntry {
+  id: string;
+  timestampIso: string;
+  level: "info" | "error";
+  action: "start" | "stop" | "reset" | "import" | "agent";
+  labId: string | null;
+  provider: LabProvider | "mock";
+  message: string;
+  result: "success" | "error";
 }
