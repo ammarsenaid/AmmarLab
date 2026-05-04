@@ -1,0 +1,14 @@
+{
+  "id": "linux-basics",
+  "title": "Linux Basics",
+  "description": "Intro to Linux CLI navigation, files, permissions, and processes.",
+  "difficulty": "beginner",
+  "estimatedDurationMinutes": 90,
+  "requiredRamGb": 4,
+  "requiredCpuCores": 2,
+  "requiredDiskGb": 20,
+  "supportedProviders": ["hyperv", "vmware"],
+  "vms": [{"id":"linux-01","name":"Ubuntu Student VM","os":"Ubuntu 22.04","ramGb":4,"cpuCores":2,"diskGb":20}],
+  "snapshots": ["baseline", "exercise-1-ready"],
+  "studentInstructions": ["Start VM","Complete terminal worksheet","Reset to baseline if needed"]
+}

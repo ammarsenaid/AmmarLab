@@ -1,0 +1,14 @@
+{
+  "id": "windows-server-basics",
+  "title": "Windows Server Basics",
+  "description": "Server Manager, users, roles, and basic administration.",
+  "difficulty": "beginner",
+  "estimatedDurationMinutes": 120,
+  "requiredRamGb": 8,
+  "requiredCpuCores": 2,
+  "requiredDiskGb": 40,
+  "supportedProviders": ["hyperv", "vmware"],
+  "vms": [{"id":"ws-01","name":"Windows Server VM","os":"Windows Server 2022","ramGb":8,"cpuCores":2,"diskGb":40}],
+  "snapshots": ["baseline", "post-role-install"],
+  "studentInstructions": ["Launch server VM","Install role","Validate services"]
+}
