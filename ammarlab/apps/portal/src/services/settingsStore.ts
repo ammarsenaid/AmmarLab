@@ -3,6 +3,7 @@ export type AppSettings = {
   localToken: string;
   defaultProvider: "auto" | "hyperv" | "vmware";
   uiDensity: "comfortable" | "compact";
+  vmrunPath: string;
 };
 
 const DEFAULT_BASE = "http://127.0.0.1:4788";
@@ -12,6 +13,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   localToken: DEFAULT_TOKEN,
   defaultProvider: "auto",
   uiDensity: "comfortable",
+  vmrunPath: "",
 };
 
 export const settingsStore = {
@@ -21,6 +23,7 @@ export const settingsStore = {
       localToken: localStorage.getItem("ammarlab.token") ?? DEFAULT_SETTINGS.localToken,
       defaultProvider: (localStorage.getItem("ammarlab.defaultProvider") as AppSettings["defaultProvider"]) ?? DEFAULT_SETTINGS.defaultProvider,
       uiDensity: (localStorage.getItem("ammarlab.density") as AppSettings["uiDensity"]) ?? DEFAULT_SETTINGS.uiDensity,
+      vmrunPath: localStorage.getItem("ammarlab.vmrunPath") ?? DEFAULT_SETTINGS.vmrunPath,
     };
   },
   set(settings: AppSettings) {
@@ -28,12 +31,14 @@ export const settingsStore = {
     localStorage.setItem("ammarlab.token", settings.localToken);
     localStorage.setItem("ammarlab.defaultProvider", settings.defaultProvider);
     localStorage.setItem("ammarlab.density", settings.uiDensity);
+    localStorage.setItem("ammarlab.vmrunPath", settings.vmrunPath);
   },
   reset() {
     localStorage.removeItem("ammarlab.agentUrl");
     localStorage.removeItem("ammarlab.token");
     localStorage.removeItem("ammarlab.defaultProvider");
     localStorage.removeItem("ammarlab.density");
+    localStorage.removeItem("ammarlab.vmrunPath");
   },
 };
 
